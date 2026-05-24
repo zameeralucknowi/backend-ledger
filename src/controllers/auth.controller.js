@@ -1,5 +1,12 @@
+require('dotenv').config()
 const User = require('../models/user.model')
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken')
+
+function createToken(user){
+    const token = jwt.sign({_id:user._id},process.env.JWT_SECRET_KEY,{expiresIn:'3d'});
+    return token;
+}
 
 const signupController = async (req,res) =>{
     try {    
@@ -18,6 +25,10 @@ const signupController = async (req,res) =>{
             name : name
         })
         await newUser.save();
+        const token = createToken(newUser);
+        res.cookie('token',token,{
+            maxAge:'86400000'
+        })
         return res.status(201).json({
             message : 'user created successfully',
             data : newUser
@@ -44,6 +55,8 @@ const loginController = async(req,res)=>{
                 status : 'failed'
             })
         }
+        const token = createToken(user);
+        res.cookie('token',token,{maxAge:'86400000'})
         return res.status(200).json({
             message : 'user loggedin successfully',
             data:user
